@@ -2,8 +2,8 @@ name: Daily Algorithm Publish
 
 on:
   schedule:
-    # KST 00:00 == UTC 15:00
-    - cron: "0 15 * * *"
+    - cron: "0 15 * * *"   # 매일 KST 00:00 (UTC 15:00)
+    - cron: "0 3 * * *"    # 매일 KST 12:00 (UTC 03:00)
   workflow_dispatch: {}
 
 permissions:
