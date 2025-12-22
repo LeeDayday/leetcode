@@ -24,22 +24,28 @@ jobs:
         id: pick
         shell: bash
         run: |
-          NEXT_FILE=$(ls pending/*.py 2>/dev/null | sort | head -n 1 || true)
+          # pending 폴더에서 파일 1개 선택 (언어 섞여 있어도 OK)
+          NEXT_FILE=$(find pending -maxdepth 1 -type f \( -name "*.py" -o -name "*.swift" \) | sort | head -n 1 || true)
+
           if [ -z "$NEXT_FILE" ]; then
             echo "found=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          BASENAME=$(basename "$NEXT_FILE")   # ex: 1543.py
+          BASENAME=$(basename "$NEXT_FILE")   # ex: 1543.py / 1543.swift
           NUM="${BASENAME%%.*}"               # ex: 1543
-          DEST_DIR="algorithms"
+          EXT="${BASENAME##*.}"               # ex: py / swift
+
+          DEST_DIR="algorithms/$EXT"
           mkdir -p "$DEST_DIR"
           DEST_PATH="$DEST_DIR/$BASENAME"
 
-          echo "NEXT_FILE=$NEXT_FILE"   >> "$GITHUB_OUTPUT"
-          echo "DEST_PATH=$DEST_PATH"   >> "$GITHUB_OUTPUT"
-          echo "NUM=$NUM"               >> "$GITHUB_OUTPUT"
-          echo "found=true"             >> "$GITHUB_OUTPUT"
+          echo "NEXT_FILE=$NEXT_FILE" >> "$GITHUB_OUTPUT"
+          echo "DEST_PATH=$DEST_PATH" >> "$GITHUB_OUTPUT"
+          echo "NUM=$NUM"             >> "$GITHUB_OUTPUT"
+          echo "EXT=$EXT"             >> "$GITHUB_OUTPUT"
+          echo "found=true"           >> "$GITHUB_OUTPUT"
+
 
       - name: Move, commit, push
         if: steps.pick.outputs.found == 'true'
