@@ -12,7 +12,7 @@ class Heap {
         data[1]
     }
 
-    func heapify(_ array: [Int]) {
+    func buildHeap(_ array: [Int]) {
         data = [0] + array
 
         for i in stride(from: count / 2, through: 1, by: -1) {
@@ -22,12 +22,7 @@ class Heap {
 
     func push(_ val: Int) {
         data.append(val)
-        var i = data.count - 1
-
-        while i > 1 && data[i] > data[i / 2] {
-            data.swapAt(i, i / 2)
-            i /= 2
-        }
+        siftUp(data.count - 1)
     }
 
     func pop() -> Int? {
@@ -44,6 +39,15 @@ class Heap {
         siftDown(1)
 
         return result
+    }
+
+    private func siftUp(_ index: Int) {
+        var i = index
+
+        while i > 1 && data[i] > data[i / 2] {
+            data.swapAt(i, i / 2)
+            i /= 2
+        }
     }
 
     private func siftDown(_ index: Int) {
@@ -71,7 +75,6 @@ class Heap {
         }
     }
 }
-
 class Solution {
     func lastStoneWeight(_ stones: [Int]) -> Int {
         let heap = Heap()
