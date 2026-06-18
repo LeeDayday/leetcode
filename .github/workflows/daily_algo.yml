@@ -20,39 +20,23 @@ jobs:
           git config user.name "${{ github.actor }}"
           git config user.email "${{ github.actor }}@users.noreply.github.com"
 
-      - name: Pick next unpublished bundle
+      - name: Pick next pending bundle
         id: pick
         shell: bash
         run: |
           mkdir -p algorithms
 
-          NEXT_NUM=""
+          NEXT_FILE=$(find pending -maxdepth 1 -type f \( -name "*.py" -o -name "*.swift" -o -name "*.md" \) | sort | head -n 1 || true)
 
-          for file in $(find pending -maxdepth 1 -type f \( -name "*.swift" -o -name "*.md" -o -name "*.py" \) | sort); do
-            BASENAME=$(basename "$file")
-            NUM="${BASENAME%%.*}"
-
-            ALREADY_PUBLISHED=0
-
-            for ext in swift md py; do
-              if [ -f "algorithms/${NUM}.${ext}" ]; then
-                ALREADY_PUBLISHED=1
-                break
-              fi
-            done
-
-            if [ "$ALREADY_PUBLISHED" -eq 0 ]; then
-              NEXT_NUM="$NUM"
-              break
-            fi
-          done
-
-          if [ -z "$NEXT_NUM" ]; then
+          if [ -z "$NEXT_FILE" ]; then
             echo "found=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          echo "NUM=$NEXT_NUM" >> "$GITHUB_OUTPUT"
+          BASENAME=$(basename "$NEXT_FILE")
+          NUM="${BASENAME%%.*}"
+
+          echo "NUM=$NUM" >> "$GITHUB_OUTPUT"
           echo "found=true" >> "$GITHUB_OUTPUT"
 
       - name: Move, commit, push
@@ -67,7 +51,7 @@ jobs:
             DEST="algorithms/${NUM}.${ext}"
 
             if [ -f "$SRC" ]; then
-              git mv "$SRC" "$DEST"
+              git mv -f "$SRC" "$DEST"
               MOVED=1
             fi
           done
