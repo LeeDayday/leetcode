@@ -2,7 +2,7 @@ name: Daily Algorithm Publish
 
 on:
   schedule:
-    - cron: "0 3 * * *" # 매일 KST 12:00 (UTC 03:00)
+    - cron: "0 3 * * *" # 매일 KST 12:00
   workflow_dispatch: {}
 
 permissions:
@@ -11,6 +11,7 @@ permissions:
 jobs:
   publish-one:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -19,24 +20,39 @@ jobs:
           git config user.name "${{ github.actor }}"
           git config user.email "${{ github.actor }}@users.noreply.github.com"
 
-      - name: Pick next pending bundle
+      - name: Pick next unpublished bundle
         id: pick
         shell: bash
         run: |
           mkdir -p algorithms
 
-          # pending 폴더에서 허용 확장자 중 가장 앞 번호의 파일 1개를 찾음
-          NEXT_FILE=$(find pending -maxdepth 1 -type f \( -name "*.py" -o -name "*.swift" -o -name "*.md" \) | sort | head -n 1 || true)
+          NEXT_NUM=""
 
-          if [ -z "$NEXT_FILE" ]; then
+          for file in $(find pending -maxdepth 1 -type f \( -name "*.swift" -o -name "*.md" -o -name "*.py" \) | sort); do
+            BASENAME=$(basename "$file")
+            NUM="${BASENAME%%.*}"
+
+            ALREADY_PUBLISHED=0
+
+            for ext in swift md py; do
+              if [ -f "algorithms/${NUM}.${ext}" ]; then
+                ALREADY_PUBLISHED=1
+                break
+              fi
+            done
+
+            if [ "$ALREADY_PUBLISHED" -eq 0 ]; then
+              NEXT_NUM="$NUM"
+              break
+            fi
+          done
+
+          if [ -z "$NEXT_NUM" ]; then
             echo "found=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          BASENAME=$(basename "$NEXT_FILE")   # ex: 1543.swift
-          NUM="${BASENAME%%.*}"               # ex: 1543
-
-          echo "NUM=$NUM" >> "$GITHUB_OUTPUT"
+          echo "NUM=$NEXT_NUM" >> "$GITHUB_OUTPUT"
           echo "found=true" >> "$GITHUB_OUTPUT"
 
       - name: Move, commit, push
@@ -61,6 +77,12 @@ jobs:
             exit 0
           fi
 
-          git add algorithms
+          git add algorithms pending
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
           git commit -m "feat(algo): publish #${NUM}"
           git push
