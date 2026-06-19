@@ -3,17 +3,18 @@
 
 class Solution {
     func finalPrices(_ prices: [Int]) -> [Int] {
-        let n: Int = prices.count
-        var prices = prices
-        for i in 0..<n {
-            var j = i+1
-            while j < n && prices[i] < prices[j] {
-                j += 1
+        var result = prices
+        var stack: [Int] = [] // 아직 할인받을 값을 찾지 못한 index
+
+        for i in 0..<prices.count {
+            while !stack.isEmpty && prices[stack.last!] >= prices[i] {
+                let idx = stack.removeLast()
+                result[idx] -= prices[i]
             }
-            if j < n {
-                prices[i] -= prices[j]
-            }
+
+            stack.append(i)
         }
-        return prices
+
+        return result
     }
 }
