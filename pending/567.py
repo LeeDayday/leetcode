@@ -15,6 +15,8 @@ class Solution:
             left = s2[i - n]
             right = s2[i]
             tmp_counter[left] -= 1
+            if tmp_counter[left] == 0:
+                del tmp_counter[left]
             tmp_counter[right] += 1
             if s1_counter == tmp_counter:
                 return True
